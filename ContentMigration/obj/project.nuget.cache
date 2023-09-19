@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "4wckkOdSKQSf6KIO19lRc8aMML1AU8l6QVHFuSPFcxYO2JjHr3+eDTP59D2Ymyt59wuMAwSuXS8UYOJPifqb3A==",
+  "dgSpecHash": "1/VZf7I4q1kbf1bK7RPr8+fCwXGhqWi/ia/Xr9GPnnEbfKi3/VH607LR/gh7hfN1Swa8kNp5sKFsf9OGdsq5oA==",
   "success": true,
   "projectFilePath": "C:\\projects\\SitecoreContentMigration\\ContentMigration\\ContentMigration.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\sergey.azarenko\\.nuget\\packages\\azure.core\\1.25.0\\azure.core.1.25.0.nupkg.sha512",
     "C:\\Users\\sergey.azarenko\\.nuget\\packages\\azure.identity\\1.7.0\\azure.identity.1.7.0.nupkg.sha512",
+    "C:\\Users\\sergey.azarenko\\.nuget\\packages\\commandlineparser\\2.9.1\\commandlineparser.2.9.1.nupkg.sha512",
     "C:\\Users\\sergey.azarenko\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\sergey.azarenko\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\1.1.1\\microsoft.bcl.asyncinterfaces.1.1.1.nupkg.sha512",
     "C:\\Users\\sergey.azarenko\\.nuget\\packages\\microsoft.csharp\\4.5.0\\microsoft.csharp.4.5.0.nupkg.sha512",

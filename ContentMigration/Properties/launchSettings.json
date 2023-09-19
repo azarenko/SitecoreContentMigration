@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ContentMigration": {
+      "commandName": "Project",
+      "commandLineArgs": "--item={6915DCB0-79EB-4272-8491-8471013E9350} --recursive=true"
+    }
+  }
+}

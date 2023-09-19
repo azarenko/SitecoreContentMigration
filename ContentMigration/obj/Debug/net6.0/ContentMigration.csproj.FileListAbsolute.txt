@@ -76,3 +76,4 @@ C:\projects\SitecoreContentMigration\ContentMigration\bin\Debug\net6.0\Microsoft
 C:\projects\SitecoreContentMigration\ContentMigration\bin\Debug\net6.0\Microsoft.Extensions.FileProviders.Physical.dll
 C:\projects\SitecoreContentMigration\ContentMigration\bin\Debug\net6.0\Microsoft.Extensions.FileSystemGlobbing.dll
 C:\projects\SitecoreContentMigration\ContentMigration\bin\Debug\net6.0\appsettings.json
+C:\projects\SitecoreContentMigration\ContentMigration\bin\Debug\net6.0\CommandLine.dll

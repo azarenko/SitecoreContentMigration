@@ -1,4 +1,6 @@
-﻿using ContentMigration;
+﻿using CommandLine;
+using ContentMigration;
+using ContentMigration.Migration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,12 +19,15 @@ var serviceProvider = new ServiceCollection()
         .BuildServiceProvider();
 
 
-using (var scope = serviceProvider.CreateScope())
-using (var sourceContext = scope.ServiceProvider.GetRequiredService<SourceDbContext>())
-using (var targetContext = scope.ServiceProvider.GetRequiredService<TargetDbContext>())
-{
-    var count = sourceContext.Items.Count();
-}
-
+Parser.Default.ParseArguments<ParamModel>(args)
+              .WithParsed<ParamModel>(o =>
+              {
+                  new ItemMigration(serviceProvider).Run(o.Item
+                              , o.Languages
+                              , o.Recursive
+                              , o.ImportTemplates
+                              , o.ImportBlobs
+                              , o.Overwrite);
+              });
 
 Console.WriteLine("Completed!");
