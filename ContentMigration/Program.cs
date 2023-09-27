@@ -22,12 +22,15 @@ var serviceProvider = new ServiceCollection()
 Parser.Default.ParseArguments<ParamModel>(args)
               .WithParsed<ParamModel>(o =>
               {
-                  new ItemMigration(serviceProvider).Run(o.Item
-                              , o.Languages
-                              , o.Recursive
-                              , o.ImportTemplates
-                              , o.ImportBlobs
-                              , o.Overwrite);
+                  new BlobMigration(serviceProvider).Run(o.Overwrite);
+
+                  foreach (var id in o.Item.Split(','))
+                  {
+                      new ItemMigration(serviceProvider).Run(Guid.Parse(id)
+                                  , o.Languages
+                                  , o.Recursive
+                                  , o.Overwrite);
+                  }
               });
 
 Console.WriteLine("Completed!");

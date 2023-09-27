@@ -6,7 +6,7 @@ namespace ContentMigration
     internal class ParamModel
     {
         [Option(longName:"item", Required = true)]
-        public Guid Item { get; set; }
+        public string Item { get; set; }
 
         [Option(longName: "lang", Default = null)]
         public string Languages { get; set; }

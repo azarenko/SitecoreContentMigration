@@ -8,7 +8,7 @@ namespace ContentMigration.Migration
         {
         }
 
-        public override void Run(Guid itemId, string languages, bool recurcive, bool importTemplate, bool importBlob, bool overwrite)
+        public override void Run(Guid itemId, string languages, bool recurcive, bool overwrite)
         {
             List<Items> childs = new List<Items>();
 
@@ -27,13 +27,14 @@ namespace ContentMigration.Migration
                 var targetParentItem = targetDbContext.Items.FirstOrDefault(i => i.ID == sourceItem.ParentID);
 
                 if (targetParentItem == null)
-                    throw new Exception($"Parent for item {itemId} {sourceItem.Name}  not exist");
+                {
+                    new ItemMigration(_serviceProvider).Run(sourceItem.ParentID, languages, recurcive, overwrite);
+                }
 
                 var targetItem = targetDbContext.Items.FirstOrDefault(i => i.ID == itemId);
 
                 if (targetItem != null)
                 {
-                    Console.WriteLine($"Item {itemId} exist in Target database");
 
                     if ((targetItem.Updated == sourceItem.Updated) && !overwrite)
                     {
@@ -50,6 +51,8 @@ namespace ContentMigration.Migration
                         targetItem.Created = sourceItem.Created;
 
                         targetDbContext.SaveChanges();
+
+                        Console.WriteLine($"Item {itemId} updated");
                     }
                 }
                 else
@@ -67,7 +70,10 @@ namespace ContentMigration.Migration
                     };
 
                     targetDbContext.Items.Add(newTargetItem);
+
                     targetDbContext.SaveChanges();
+
+                    Console.WriteLine($"Item {itemId} added");
                 }
 
                 // Import shared fields
@@ -75,15 +81,13 @@ namespace ContentMigration.Migration
 
                 foreach (var sharedField in sharedFields)
                 {
-                    var targetSharedField = targetDbContext.SharedFields.FirstOrDefault(tsf => tsf.Id == sharedField.Id);
+                    var targetSharedField = targetDbContext.SharedFields.FirstOrDefault(tsf => tsf.ItemId == sharedField.ItemId && tsf.FieldId == sharedField.FieldId);
 
                     if (targetSharedField != null)
                     {
-                        Console.WriteLine($"Shared field {sharedField.Id} exist in Target database");
-
+                        
                         if ((targetSharedField.Updated == sharedField.Updated) && !overwrite)
                         {
-                            Console.WriteLine($"Shared field {sharedField.Id} similar in Source and Target databases. Skip importing");
                             continue;
                         }
                         else
@@ -92,6 +96,8 @@ namespace ContentMigration.Migration
                             targetSharedField.FieldId = sharedField.FieldId;
                             targetSharedField.Created = sharedField.Created;
                             targetSharedField.Updated = sharedField.Updated;
+
+                            Console.WriteLine($"Shared field {sharedField.Id} updated");
                         }
                     }
                     else
@@ -107,24 +113,41 @@ namespace ContentMigration.Migration
                         };
 
                         targetDbContext.SharedFields.Add(newTargetSharedField);
+
+                        Console.WriteLine($"Shared field {sharedField.Id} added");
                     }
                 }
                 targetDbContext.SaveChanges();
 
                 // Import unversioned fields
-                var unversionedFields = sourceDbContext.UnversionedFields.Where(uf => uf.ItemId == itemId);
+                IQueryable<UnversionedFields> unversionedFields;
+
+                if (string.IsNullOrEmpty(languages))
+                {
+                    unversionedFields = sourceDbContext.UnversionedFields.Where(uf => uf.ItemId == itemId);
+                }
+                else
+                {
+                    var langList = new List<string>(languages.Split(','));
+
+                    if (!langList.Contains("en"))
+                    {
+                        langList.Add("en");
+                    }
+
+                    unversionedFields = sourceDbContext.UnversionedFields.Where(uf => uf.ItemId == itemId && langList.Contains(uf.Language));
+                }
 
                 foreach (var unversionedField in unversionedFields)
                 {
-                    var targetunversionedField = targetDbContext.UnversionedFields.FirstOrDefault(tuf => tuf.Id == unversionedField.Id);
+                    var targetunversionedField = targetDbContext.UnversionedFields.FirstOrDefault(tuf => tuf.ItemId == unversionedField.ItemId 
+                    && tuf.FieldId == unversionedField.FieldId
+                    && tuf.Language == unversionedField.Language);
 
                     if (targetunversionedField != null)
                     {
-                        Console.WriteLine($"Unversioned field {unversionedField.Id} exist in Target database");
-
                         if ((targetunversionedField.Updated == unversionedField.Updated) && !overwrite)
                         {
-                            Console.WriteLine($"Unversioned field {unversionedField.Id} similar in Source and Target databases. Skip importing");
                             continue;
                         }
                         else
@@ -134,6 +157,8 @@ namespace ContentMigration.Migration
                             targetunversionedField.Created = unversionedField.Created;
                             targetunversionedField.Updated = unversionedField.Updated;
                             targetunversionedField.Language = unversionedField.Language;
+
+                            Console.WriteLine($"Unversioned field {unversionedField.Id} updated");
                         }
                     }
                     else
@@ -150,24 +175,42 @@ namespace ContentMigration.Migration
                         };
 
                         targetDbContext.UnversionedFields.Add(newTargetunversionedField);
+
+                        Console.WriteLine($"Unversioned field {unversionedField.Id} added");
                     }
                 }
                 targetDbContext.SaveChanges();
 
                 // Import versioned fields
-                var versionedFields = sourceDbContext.VersionedFields.Where(uf => uf.ItemId == itemId);
+                IQueryable<VersionedFields> versionedFields;
+
+                if (string.IsNullOrEmpty(languages))
+                {
+                    versionedFields = sourceDbContext.VersionedFields.Where(vf => vf.ItemId == itemId);
+                }
+                else
+                {
+                    var langList = new List<string>(languages.Split(','));
+
+                    if (!langList.Contains("en"))
+                    {
+                        langList.Add("en");
+                    }
+
+                    versionedFields = sourceDbContext.VersionedFields.Where(vf => vf.ItemId == itemId && langList.Contains(vf.Language));
+                }
 
                 foreach (var versionedField in versionedFields)
                 {
-                    var targetversionedField = targetDbContext.VersionedFields.FirstOrDefault(tuf => tuf.Id == versionedField.Id);
+                    var targetversionedField = targetDbContext.VersionedFields.FirstOrDefault(tuf => tuf.ItemId == versionedField.ItemId
+                    && tuf.FieldId == versionedField.FieldId
+                    && tuf.Language == versionedField.Language
+                    && tuf.Version == versionedField.Version);
 
                     if (targetversionedField != null)
                     {
-                        Console.WriteLine($"versioned field {versionedField.Id} exist in Target database");
-
                         if ((targetversionedField.Updated == versionedField.Updated) && !overwrite)
                         {
-                            Console.WriteLine($"versioned field {versionedField.Id} similar in Source and Target databases. Skip importing");
                             continue;
                         }
                         else
@@ -178,6 +221,8 @@ namespace ContentMigration.Migration
                             targetversionedField.Updated = versionedField.Updated;
                             targetversionedField.Language = versionedField.Language;
                             targetversionedField.Version = versionedField.Version;
+
+                            Console.WriteLine($"versioned field {versionedField.Id} updated");
                         }
                     }
                     else
@@ -195,6 +240,8 @@ namespace ContentMigration.Migration
                         };
 
                         targetDbContext.VersionedFields.Add(newTargetversionedField);
+
+                        Console.WriteLine($"versioned field {versionedField.Id} similar in Source and Target databases. Skip importing");
                     }
                 }
                 targetDbContext.SaveChanges();
@@ -210,8 +257,6 @@ namespace ContentMigration.Migration
                 new ItemMigration(_serviceProvider).Run(child.ID
                             , languages
                             , recurcive
-                            , importTemplate
-                            , importBlob
                             , overwrite);
             }
 

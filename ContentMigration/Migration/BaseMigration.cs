@@ -11,6 +11,10 @@ namespace ContentMigration.Migration
             _serviceProvider = serviceProvider;
         }
 
-        public abstract void Run(Guid itemId, string languages, bool recurcive, bool importTemplate, bool importBlob, bool overwrite);
+        public virtual void Run(Guid itemId, string languages, bool recurcive, bool overwrite)
+        { }
+
+        public virtual void Run(bool overwrite)
+        { }
     }
 }
