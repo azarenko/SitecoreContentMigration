@@ -2,7 +2,7 @@
   "profiles": {
     "ContentMigration": {
       "commandName": "Project",
-      "commandLineArgs": "--item={3C1715FE-6A13-4FCF-845F-DE308BA9741D},{0DE95AE4-41AB-4D01-9EB0-67441B7C2450} --lang=tr-TR --recursive=true"
+      "commandLineArgs": "--item={F99253FC-C4C1-4B7A-8FB3-691F16469C40} --lang=es-AR,fr-BE,nl-BE --recursive=true"
     }
   }
 }

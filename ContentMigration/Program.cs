@@ -13,9 +13,9 @@ var configuration = new ConfigurationBuilder()
 var serviceProvider = new ServiceCollection()
         .AddSingleton<IConfiguration>(configuration)
         .AddDbContext<SourceDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("SourceDb")))
+            options.UseSqlServer(configuration.GetConnectionString("SourceDb"), options => options.CommandTimeout(360)))
         .AddDbContext<TargetDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("TargetDb")))
+            options.UseSqlServer(configuration.GetConnectionString("TargetDb"), options => options.CommandTimeout(360)))
         .BuildServiceProvider();
 
 

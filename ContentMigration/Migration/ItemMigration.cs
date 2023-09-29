@@ -8,7 +8,7 @@ namespace ContentMigration.Migration
         {
         }
 
-        public override void Run(Guid itemId, string languages, bool recurcive, bool overwrite)
+        public override void Run(Guid itemId, string languages, bool recursive, bool overwrite)
         {
             List<Items> childs = new List<Items>();
 
@@ -16,19 +16,19 @@ namespace ContentMigration.Migration
             using (var sourceDbContext = scope.ServiceProvider.GetRequiredService<SourceDbContext>())
             using (var targetDbContext = scope.ServiceProvider.GetRequiredService<TargetDbContext>())
             {
-                Console.WriteLine($"Start importing item {itemId}");
-
                 var sourceItem = sourceDbContext.Items.FirstOrDefault(i => i.ID == itemId);
 
                 if (sourceItem == null)
                     throw new Exception($"Source item {itemId} {sourceItem.Name} not exist");
+
+                Log($"Start importing item {itemId} {sourceItem.Name}", ConsoleColor.White);
 
                 // Make sure we have a parent for current item
                 var targetParentItem = targetDbContext.Items.FirstOrDefault(i => i.ID == sourceItem.ParentID);
 
                 if (targetParentItem == null)
                 {
-                    new ItemMigration(_serviceProvider).Run(sourceItem.ParentID, languages, recurcive, overwrite);
+                    new ItemMigration(_serviceProvider).Run(sourceItem.ParentID, languages, recursive, overwrite);
                 }
 
                 var targetItem = targetDbContext.Items.FirstOrDefault(i => i.ID == itemId);
@@ -36,9 +36,9 @@ namespace ContentMigration.Migration
                 if (targetItem != null)
                 {
 
-                    if ((targetItem.Updated == sourceItem.Updated) && !overwrite)
+                    if ((targetItem.Updated == sourceItem.Updated) || !overwrite)
                     {
-                        Console.WriteLine($"Item {itemId} similar in Source and Target databases. Skip importing");
+                        Log($"Item {itemId} similar in Source and Target databases. Skip importing", ConsoleColor.White);
                     }
                     else
                     {
@@ -52,7 +52,7 @@ namespace ContentMigration.Migration
 
                         targetDbContext.SaveChanges();
 
-                        Console.WriteLine($"Item {itemId} updated");
+                        Log($"Item {itemId} updated", ConsoleColor.Yellow);
                     }
                 }
                 else
@@ -73,7 +73,7 @@ namespace ContentMigration.Migration
 
                     targetDbContext.SaveChanges();
 
-                    Console.WriteLine($"Item {itemId} added");
+                    Log($"Item {itemId} added", ConsoleColor.Green);
                 }
 
                 // Import shared fields
@@ -86,7 +86,7 @@ namespace ContentMigration.Migration
                     if (targetSharedField != null)
                     {
                         
-                        if ((targetSharedField.Updated == sharedField.Updated) && !overwrite)
+                        if ((targetSharedField.Updated == sharedField.Updated) || !overwrite)
                         {
                             continue;
                         }
@@ -97,7 +97,7 @@ namespace ContentMigration.Migration
                             targetSharedField.Created = sharedField.Created;
                             targetSharedField.Updated = sharedField.Updated;
 
-                            Console.WriteLine($"Shared field {sharedField.Id} updated");
+                            Log($"Shared field {sharedField.Id} updated", ConsoleColor.Yellow);
                         }
                     }
                     else
@@ -114,7 +114,7 @@ namespace ContentMigration.Migration
 
                         targetDbContext.SharedFields.Add(newTargetSharedField);
 
-                        Console.WriteLine($"Shared field {sharedField.Id} added");
+                        Log($"Shared field {sharedField.Id} added", ConsoleColor.Green);
                     }
                 }
                 targetDbContext.SaveChanges();
@@ -146,7 +146,7 @@ namespace ContentMigration.Migration
 
                     if (targetunversionedField != null)
                     {
-                        if ((targetunversionedField.Updated == unversionedField.Updated) && !overwrite)
+                        if ((targetunversionedField.Updated == unversionedField.Updated) || !overwrite)
                         {
                             continue;
                         }
@@ -158,7 +158,7 @@ namespace ContentMigration.Migration
                             targetunversionedField.Updated = unversionedField.Updated;
                             targetunversionedField.Language = unversionedField.Language;
 
-                            Console.WriteLine($"Unversioned field {unversionedField.Id} updated");
+                            Log($"Unversioned language:{unversionedField.Language} field {unversionedField.Id} updated", ConsoleColor.Yellow);
                         }
                     }
                     else
@@ -176,7 +176,7 @@ namespace ContentMigration.Migration
 
                         targetDbContext.UnversionedFields.Add(newTargetunversionedField);
 
-                        Console.WriteLine($"Unversioned field {unversionedField.Id} added");
+                        Log($"Unversioned language:{unversionedField.Language} field {unversionedField.Id} added", ConsoleColor.Green);
                     }
                 }
                 targetDbContext.SaveChanges();
@@ -209,7 +209,7 @@ namespace ContentMigration.Migration
 
                     if (targetversionedField != null)
                     {
-                        if ((targetversionedField.Updated == versionedField.Updated) && !overwrite)
+                        if ((targetversionedField.Updated == versionedField.Updated) || !overwrite)
                         {
                             continue;
                         }
@@ -222,7 +222,7 @@ namespace ContentMigration.Migration
                             targetversionedField.Language = versionedField.Language;
                             targetversionedField.Version = versionedField.Version;
 
-                            Console.WriteLine($"versioned field {versionedField.Id} updated");
+                            Log($"Versioned Version:{versionedField.Version} language:{versionedField.Language} field {versionedField.Id} updated", ConsoleColor.Yellow);
                         }
                     }
                     else
@@ -241,26 +241,40 @@ namespace ContentMigration.Migration
 
                         targetDbContext.VersionedFields.Add(newTargetversionedField);
 
-                        Console.WriteLine($"versioned field {versionedField.Id} similar in Source and Target databases. Skip importing");
+                        Log($"Versioned Version:{versionedField.Version} language:{versionedField.Language} field {versionedField.Id} added", ConsoleColor.Green);
                     }
                 }
                 targetDbContext.SaveChanges();
 
-                if (recurcive)
+                if (recursive)
                 {
                     childs = sourceDbContext.Items.Where(d => d.ParentID == itemId).ToList();
                 }
             }
 
-            foreach (var child in childs)
+            var options = new ParallelOptions { MaxDegreeOfParallelism = 30 };
+            Parallel.ForEach(childs, options, child =>
             {
                 new ItemMigration(_serviceProvider).Run(child.ID
                             , languages
-                            , recurcive
+                            , recursive
                             , overwrite);
-            }
+            });
 
-            Console.WriteLine($"Finish importing item {itemId}");
+            Log($"Finish importing item {itemId}", ConsoleColor.White);
+        }
+
+        private void Log(string message, ConsoleColor color)
+        {
+            lock (Console.Out)
+            {
+                var initColor = Console.ForegroundColor;
+                Console.ForegroundColor = color;
+
+                Console.WriteLine(message);
+
+                Console.ForegroundColor = initColor;
+            }
         }
     }
 }
